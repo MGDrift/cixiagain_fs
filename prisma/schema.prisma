@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  username  String   @unique
+  password  String
+  role      String   @default("customer")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ratings   Rating[]
+}
+
+model Category {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  createdAt DateTime  @default(now())
+  products  Product[]
+}
+
+model Product {
+  id          Int       @id @default(autoincrement())
+  name        String
+  description String?
+  price       Float?
+  stock       Int       @default(0)
+  categoryId  Int?
+  category    Category? @relation(fields: [categoryId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  ratings     Rating[]
+  image       String?
+  Comment     Comment[]
+  KitItem     KitItem[]
+}
+
+model Rating {
+  id        Int      @id @default(autoincrement())
+  value     Int
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id])
+  productId Int
+  user      User?    @relation(fields: [userId], references: [id])
+  userId    Int?
+
+  @@unique([userId, productId])
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  productId Int
+  userName  String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([productId, createdAt])
+}
+
+model Kit {
+  id        Int       @id @default(autoincrement())
+  name      String
+  paperType String?
+  createdAt DateTime  @default(now())
+  items     KitItem[]
+}
+
+model KitItem {
+  id        Int @id @default(autoincrement())
+  kitId     Int
+  productId Int
+  quantity  Int @default(1)
+
+  kit     Kit     @relation(fields: [kitId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@unique([kitId, productId]) // evita duplicados del mismo producto dentro del kit
+}
